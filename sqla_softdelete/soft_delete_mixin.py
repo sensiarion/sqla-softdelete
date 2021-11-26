@@ -7,7 +7,7 @@ from sqlalchemy.orm import Query
 
 
 class SoftDeleteMixin:
-    deleted_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
+    deleted_at = sa.Column(sa.DateTime(timezone=False), nullable=True)
 
     def delete(self, deleted_at: datetime = None):
         self.deleted_at = deleted_at or datetime.now()
