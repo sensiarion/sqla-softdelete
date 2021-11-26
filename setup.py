@@ -3,7 +3,6 @@ from setuptools import setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# TODO: change download url
 setup(
     name='sqla_softdelete',
     packages=['sqla_softdelete'],
@@ -15,7 +14,7 @@ setup(
     author='Izert Mansur (forked from Vitaly Efremov)',
     author_email='izertmi@gmail.com',
     url='https://github.com/sensiarion/sqla-softdelete',
-    download_url='https://github.com/vitaly-efremov/sqla-softdelete/archive/v1.1.tar.gz',
+    download_url='https://github.com/sensiarion/sqla-softdelete/releases/tag/1.3',
     keywords=['SQLAlchemy', 'Soft delete'],
     install_requires=[
         'sqlalchemy>=1.4.1',
