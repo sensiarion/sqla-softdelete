@@ -21,7 +21,7 @@ def before_compile(execute_state: ORMExecuteState):
     if include_deleted:
         return
 
-    if not execute_state.is_relationship_load:
+    if execute_state.is_column_load:
         for mapper in execute_state.all_mappers:
             if mapper and issubclass(mapper.class_, SoftDeleteMixin):
                 execute_state.statement = execute_state.statement.where(mapper.entity.deleted_at.is_(None))

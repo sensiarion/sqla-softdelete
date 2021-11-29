@@ -67,7 +67,7 @@ def test_get_not_deleted(dbsession):
     dbsession.flush()
 
     # Act
-    actual_account = dbsession.query(Account).get(account.id)
+    actual_account = dbsession.get(Account, account.id)
 
     # Assert
     assert actual_account == account
@@ -85,7 +85,22 @@ def test_get_deleted(dbsession):
 
     # Act & Assert
     with pytest.raises(ObjectDeletedError):
-        dbsession.query(Account).get(account.id)
+        dbsession.get(Account, account.id)
+
+
+@pytest.mark.db
+def test_get_deleted_entity(dbsession):
+    # Arrange
+    account = Account(name='account')
+    account.delete()
+
+    dbsession.add(account)
+    dbsession.flush()
+    dbsession.expire(account)
+
+    # Act & Assert
+    with pytest.raises(ObjectDeletedError):
+        dbsession.execute(select(Account).where(Account.id == account.id)).scalar()
 
 
 @pytest.mark.db
