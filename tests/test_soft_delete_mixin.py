@@ -133,7 +133,7 @@ def test_get_relation_lazy_deleted(dbsession):
 
 
 @pytest.mark.db
-def test_get_relation_joined_deleted(dbsession):
+def test_get_relation_joinedload_deleted(dbsession):
     # Arrange
     account = Account(name='account')
     account.logins = [Login(), Login(), Login()]
@@ -146,3 +146,23 @@ def test_get_relation_joined_deleted(dbsession):
     # Act & Assert
     fetched: Account = dbsession.get(Account, account.id, options=[joinedload(Account.logins)])
     assert len(fetched.logins) == 2
+
+
+@pytest.mark.db
+def test_get_join_deleted(dbsession):
+    # Arrange
+    account = Account(name='account')
+    account.logins = [Login(), Login(), Login()]
+
+    # delete entire account
+    account.delete()
+
+    dbsession.add(account)
+    dbsession.flush()
+    dbsession.expire(account)
+
+    # Act & Assert
+    logins = dbsession.execute(
+        select(Login, Account).join(Account, Account.id == Login.account_id)
+    ).scalars().all()
+    assert len(logins) == 0
