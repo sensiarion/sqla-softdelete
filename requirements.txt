@@ -1,2 +1,1 @@
 sqlalchemy >= 1.4.1
-pytest ==4.0.0
