@@ -5,7 +5,7 @@
 #   2. создай Dockerfile, выполнив следующие требования:
 #       - автоматический инкремент версии модуля
 #       - в докере собираются артефакты проекта в папке dist/
-#   3. Создай Access token (в gitlab: settings->Access Tokens) с правами write_repository
+#   3. Создай Access token (в gitlab: settings->Access Tokens) с правами write_repository (занести в CI переменные CI_DEPLOY_TOKEN и CI_DEPLOY_TOKEN_NAME)
 #   4. Поменяй tags на нужные для сборки твоего проекта (или не меняй)
 
 # Что делает данная конфигурация:
