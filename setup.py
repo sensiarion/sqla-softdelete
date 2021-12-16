@@ -1,12 +1,15 @@
 from setuptools import setup
 
-with open("README.md", "r") as fh:
+with open("readme.md", "r") as fh:
     long_description = fh.read()
+
+with open("VERSION", "r", encoding='utf-8') as version_file:
+    version = version_file.read().strip()
 
 setup(
     name='sqla_softdelete',
     packages=['sqla_softdelete'],
-    version='1.3',
+    version=version,
     license='GPLv3+',
     long_description=long_description,
     long_description_content_type="text/markdown",

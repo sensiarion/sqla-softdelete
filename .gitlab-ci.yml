@@ -1,0 +1,84 @@
+# CI конфигурация для автоматического релиза python проектов на gitlab pypi
+# Как использовать:
+#   1. поменяй переменную PROJECT_NAME в этапе build на название твоего проекта
+#   2. Создай файл VERSION в котором будет храниться текущая версия проекта
+#   2. создай Dockerfile, выполнив следующие требования:
+#       - автоматический инкремент версии модуля
+#       - в докере собираются артефакты проекта в папке dist/
+#   3. Создай Access token (в gitlab: settings->Access Tokens) с правами write_repository
+#   4. Поменяй tags на нужные для сборки твоего проекта (или не меняй)
+
+# Что делает данная конфигурация:
+# 1. Собирает образ твоего проекта в docker'e (в котором автоматически инкрементится версия)
+# 2. Заливает новую версию в gitlab (обновляет файл VERSION)
+# 3. Создаёт тэг по новой версии и также льёт его в gitlab
+# 4. Заливает проект в gitlab pypi хранилище
+
+# Примечание
+# В целом, конфигурация предполагает, что вы **не будете** работать с любой спецификацией версий ниже PATCH
+# Миноры и мажора проставляются разработчиками самостоятельно, когда они посчитают это действие нужным
+# Master является релизной веткой, из которой и создаются версии, а разработка ведётся в dev/release ветках
+
+stages:
+    - build
+    - bump_version
+
+build:
+    tags:
+        - node3, build_server
+    stage: build
+    script:
+        - PROJECT_NAME=sqla_softdelete # если ты форкаешь этот проект, то поменяй на своё название
+        - IMAGE_TAG=${PROJECT_NAME}_$(cat VERSION)
+        - docker build --tag ${IMAGE_TAG} .
+        - echo IMAGE_TAG=${IMAGE_TAG} > build.env
+    only:
+        - master
+    artifacts:
+        reports:
+            dotenv: build.env
+
+# задача этапа – достать инкремент из контейнера, залить это всё на git (в коммите и тэгом), а затем и на pypi
+bump_version:
+    tags:
+        - node3, build_server
+    stage: bump_version
+
+    before_script:
+        # авторизуемся, используя сгенерированный project access token (с write_repository)
+        - git remote set-url origin https://${CI_DEPLOY_TOKEN_NAME}:${CI_DEPLOY_TOKEN}@gitlab.uriit.ru/${CI_PROJECT_PATH}.git
+        - git config user.email ${GITLAB_USER_EMAIL}
+        - git config user.name ${GITLAB_USER_LOGIN}
+
+    script:
+        # достаём новую версию из контейнера
+        - docker run --rm ${IMAGE_TAG} /bin/bash -c "cat VERSION" | tee VERSION
+        - git add ./VERSION
+        - git status
+        # сохраняем сообщение из коммита для +- красивого тэга
+        - LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+
+        - git commit -m "[SKIP-CI] bump version $(cat VERSION)"
+        # создаём тэг
+        - TAG_NAME="v$(cat VERSION)"
+        - git tag -a ${TAG_NAME} -m "${LAST_COMMIT_MESSAGE}"
+        # заливаем коммит с новой версией и тэг на git
+        - git push origin HEAD:$CI_COMMIT_REF_NAME
+        - git push origin ${TAG_NAME}
+        # заливаем всё на pypi
+        - >
+            docker run \
+                -e TWINE_PASSWORD=${CI_JOB_TOKEN} \
+                -e TWINE_USERNAME=gitlab-ci-token \
+                -e CI_API_V4_URL=${CI_API_V4_URL} \
+                -e CI_PROJECT_ID=${CI_PROJECT_ID} \
+                -e CURRENT_VERSION=${CURRENT_VERSION} \
+                --rm \
+                ${IMAGE_TAG} \
+                    /bin/bash -c " \
+                        python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*"
+
+    only:
+        - master
+    dependencies:
+        - build
