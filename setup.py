@@ -6,6 +6,9 @@ with open("README.md", "r") as fh:
 with open("VERSION", "r", encoding='utf-8') as version_file:
     version = version_file.read().strip()
 
+with open('requirements.txt', "r", encoding="utf-8") as requirements_file:
+    requirements = requirements_file.readlines()
+
 setup(
     name='sqla_softdelete',
     packages=['sqla_softdelete'],
@@ -19,9 +22,7 @@ setup(
     url='https://github.com/sensiarion/sqla-softdelete',
     download_url='https://github.com/sensiarion/sqla-softdelete/releases/tag/1.3',
     keywords=['SQLAlchemy', 'Soft delete'],
-    install_requires=[
-        'sqlalchemy>=1.4.1',
-    ],
+    install_requires=requirements,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
